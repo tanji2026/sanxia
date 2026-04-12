@@ -345,15 +345,15 @@
 
     app.innerHTML = `
       <div class="flex flex-col min-h-screen p-6 fade-in max-w-lg mx-auto relative z-10">
-        <div class="flex justify-between items-center mb-6 pt-4 border-b border-slate-800 pb-4">
+        <div class="flex justify-between items-center mb-4 pt-4 border-b border-slate-800 pb-4">
           <span class="text-sm font-bold text-amber-500 tracking-widest">STAGE ${step} / ${questions.length}</span>
           <div class="flex gap-1">
             ${Array.from({length: questions.length}).map((_, i) => `<div class="h-1 w-4 ${i < step ? 'bg-amber-500' : 'bg-slate-800'}"></div>`).join('')}
           </div>
         </div>
         
-        <div class="flex-1 flex flex-col justify-center">
-          <div class="pixel-border p-6 mb-8 relative bg-slate-900/90 backdrop-blur-sm">
+        <div class="flex-1 flex flex-col justify-start pt-2">
+          <div class="pixel-border p-6 mb-6 relative bg-slate-900/90 backdrop-blur-sm">
             <div class="absolute -top-3 -left-3 w-6 h-6 border-t-2 border-l-2 border-amber-500"></div>
             <div class="absolute -bottom-3 -right-3 w-6 h-6 border-b-2 border-r-2 border-amber-500"></div>
             <h2 class="text-xl font-bold text-slate-100 leading-relaxed">${q.title}</h2>
@@ -444,7 +444,7 @@
             </div>
             
             <p class="text-xs text-amber-400 mb-3 tracking-wide">
-              ✨ 抵達三峽老街後，向店家出示此畫面即可解鎖
+              ✨ 抵達三峽後，向店家出示此畫面即可解鎖
             </p>
 
             <div class="bg-slate-900 p-4 border-2 border-dashed border-slate-600 text-slate-200 text-sm font-bold mb-4 text-center relative overflow-hidden">
