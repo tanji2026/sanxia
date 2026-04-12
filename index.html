@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>三峽職人：手路尋蹤</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
   
@@ -94,8 +95,10 @@
       description: "你擁有極高的專注力，在細節中尋找完美。三峽的木雕職人與你有著同樣的頻率，去老街巷弄裡尋找木屑的香氣，刻畫屬於你的傳說吧！",
       action: "接取任務：前往木雕工作室獲得 5 分鐘微體驗",
       style: "card-glow-wood text-amber-500", btn: "bg-amber-700 hover:bg-amber-600",
-      imgPlaceholder: "木雕工藝意象",
-      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽老街+木雕"
+      barColor: "bg-amber-500",
+      imgUrl: "assets/images/wood-artisan.jpg",
+      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽老街+木雕",
+      partner: "dye"
     },
     metal: {
       class: "金工狂戰士", title: "Lv.1 俐落的金工狂戰士", attr: "力量 / 鍛造 / 直球",
@@ -103,8 +106,10 @@
       description: "你充滿熱情與直覺，喜歡用自己的雙手創造確切的改變。三峽打鐵匠的火光與力道，正是你靈魂的寫照。敲擊出你的專屬裝備吧！",
       action: "接取任務：前往金工工作室進行敲擊體驗一次",
       style: "card-glow-metal text-slate-300", btn: "bg-slate-600 hover:bg-slate-500",
-      imgPlaceholder: "打鐵火花意象",
-      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽老街+金工"
+      barColor: "bg-slate-300",
+      imgUrl: "assets/images/metal-blacksmith.jpg",
+      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽老街+金工",
+      partner: "tea"
     },
     ferm: {
       class: "釀酵鍊金術士", title: "Lv.1 靜待的釀酵鍊金術士", attr: "時間 / 轉化 / 溫潤",
@@ -112,8 +117,10 @@
       description: "你懂得順應自然，相信時間會帶來最好的魔法。甘樂文創的釀酵坊裡，有著與你一樣溫潤的靈魂。去見證微生物的鍊金術吧！",
       action: "接取任務：前往禾乃川兌換獨家試飲與風味解說",
       style: "card-glow-ferm text-orange-500", btn: "bg-orange-700 hover:bg-orange-600",
-      imgPlaceholder: "發酵釀造意象",
-      mapUrl: "https://www.google.com/maps/search/?api=1&query=禾乃川國產豆製所"
+      barColor: "bg-orange-500",
+      imgUrl: "assets/images/ferm-alchemist.jpg",
+      mapUrl: "https://www.google.com/maps/search/?api=1&query=禾乃川國產豆製所",
+      partner: "metal"
     },
     dye: {
       class: "藍染水魔法師", title: "Lv.1 柔韌的藍染水魔法師", attr: "柔韌 / 變化 / 包容",
@@ -121,8 +128,10 @@
       description: "你像水一樣適應各種環境，卻能在浸潤之中留下深刻的色彩。三峽的藍染技藝呼喚著你，去染坊調製你的魔法藥水吧！",
       action: "接取任務：前往藍染工坊領取專屬色彩圖騰卡",
       style: "card-glow-dye text-sky-400", btn: "bg-sky-700 hover:bg-sky-600",
-      imgPlaceholder: "藍染布幔意象",
-      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽染工坊"
+      barColor: "bg-sky-400",
+      imgUrl: "assets/images/indigo-dyer.jpg",
+      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽染工坊",
+      partner: "wood"
     },
     tea: {
       class: "製茶德魯伊", title: "Lv.1 療癒的製茶德魯伊", attr: "自然 / 療癒 / 回甘",
@@ -130,23 +139,72 @@
       description: "你與土地有著深刻的連結，總能將生活的苦澀轉化為回甘的智慧。前往三峽的茶行，尋找能治癒隊友的自然靈藥吧！",
       action: "接取任務：前往在地茶行品茗三峽碧螺春",
       style: "card-glow-tea text-lime-400", btn: "bg-lime-700 hover:bg-lime-600",
-      imgPlaceholder: "三峽茶園意象",
-      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽老街+茶行"
+      barColor: "bg-lime-400",
+      imgUrl: "assets/images/tea-master.jpg",
+      mapUrl: "https://www.google.com/maps/search/?api=1&query=三峽老街+茶行",
+      partner: "ferm"
     }
   };
+
+  const bgmAudios = {
+    wood: new Audio('assets/audio/wood.mp3'),
+    metal: new Audio('assets/audio/metal.mp3'),
+    ferm: new Audio('assets/audio/ferm.mp3'),
+    dye: new Audio('assets/audio/dye.mp3'),
+    tea: new Audio('assets/audio/tea.mp3')
+  };
+  
+  // 設定所有音效為自動循環播放
+  Object.values(bgmAudios).forEach(audio => audio.loop = true);
 
   let step = 0;
   let scores = { wood: 0, metal: 0, ferm: 0, dye: 0, tea: 0 };
   let finalResult = null;
+  let isMuted = false;
+
+  function toggleMute() {
+    isMuted = !isMuted;
+    const btnIcon = document.getElementById('mute-icon');
+    
+    if (isMuted) {
+      // 靜音：暫停所有音樂
+      Object.values(bgmAudios).forEach(audio => audio.pause());
+      btnIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+    } else {
+      // 解除靜音：如果有結算結果，就繼續播放該音樂
+      if (finalResult && step > questions.length && bgmAudios[finalResult]) {
+        bgmAudios[finalResult].play().catch(() => {});
+      }
+      btnIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 10 0 0 1 0 14.14"></path>`;
+    }
+  }
+
+  function playSound(type) {
+    // 停止所有正在播放的音效並重置時間
+    Object.values(bgmAudios).forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    // 如果沒有被靜音，才播放新的音效
+    if (bgmAudios[type] && !isMuted) {
+      bgmAudios[type].play().catch(() => {});
+    }
+  }
 
   function handleStart() {
     step = 1;
     scores = { wood: 0, metal: 0, ferm: 0, dye: 0, tea: 0 };
+    Object.values(bgmAudios).forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
     render();
   }
 
   function handleAnswer(type) {
     scores[type]++;
+    // 移除這裡的 playSound(type); 讓答題過程保持純視覺或原有的環境安靜感
+
     if (step < questions.length) {
       step++;
       render();
@@ -170,17 +228,76 @@
     step = questions.length + 1;
     renderCalculating();
     
+    // 等待動畫結束後，顯示結果並播放對應音效
     setTimeout(() => {
       renderResult();
+      playSound(finalResult);
     }, 2000);
+  }
+
+  function downloadCard() {
+    const btn = document.getElementById('download-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 靈魂結印中...`;
+
+    const cardElement = document.getElementById('character-card-export');
+
+    document.fonts.ready.then(() => {
+      html2canvas(cardElement, {
+        scale: 2,
+        backgroundColor: '#0f172a',
+        useCORS: true,
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `三峽職人_${results[finalResult].class}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.innerHTML = originalText;
+      });
+    });
+  }
+
+  function getUrlParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  function generateShareLink() {
+    const baseUrl = window.location.href.split('?')[0];
+    const needType = results[finalResult].partner;
+    const shareUrl = `${baseUrl}?need=${needType}`;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      const shareBtn = document.getElementById('share-btn');
+      const originalText = shareBtn.innerHTML;
+      shareBtn.innerHTML = `已複製招募連結！`;
+      setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+    });
   }
 
   function renderLanding() {
     const app = document.getElementById('app');
+    const needParam = getUrlParam('need');
+    let subtitleHtml = `
+      來到三峽，不只走馬看花。<br/>
+      憑直覺回答 5 個問題，<br/>
+      喚醒你靈魂深處的職人職業，<br/>
+      解鎖老街巷弄裡的專屬任務。
+    `;
+
+    if (needParam && results[needParam]) {
+        subtitleHtml = `
+          <span class="text-amber-400 font-bold block mb-2">你的朋友正在尋找【${results[needParam].class}】的隊友！</span>
+          測測看你是不是他命中注定的夥伴。<br/>
+          喚醒你的職人職業，解鎖三峽專屬任務。
+        `;
+    }
+
     app.innerHTML = `
       <div class="flex flex-col items-center justify-center min-h-screen p-6 relative fade-in">
-        <div class="z-10 text-center max-w-md w-full pixel-border p-8 shadow-2xl">
-          <p class="text-xs text-slate-400 tracking-[0.3em] mb-4">SANXIA ARTISAN QUEST</p>
+        <div class="z-10 text-center max-w-md w-full pixel-border p-8 shadow-2xl bg-slate-900/90 backdrop-blur-sm">
+          <p class="text-xs text-slate-400 tracking-widest mb-4">SANXIA ARTISAN QUEST</p>
           <h1 class="text-3xl font-black text-slate-100 mb-2 leading-tight">
             三峽職人<br/>
             <span class="text-amber-500 text-4xl mt-2 block">手路尋蹤</span>
@@ -189,10 +306,7 @@
           <div class="my-8 h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent"></div>
           
           <p class="text-slate-400 mb-8 leading-relaxed text-sm">
-            來到三峽，不只走馬看花。<br/>
-            憑直覺回答 5 個問題，<br/>
-            喚醒你靈魂深處的職人職業，<br/>
-            解鎖老街巷弄裡的專屬任務。
+            ${subtitleHtml}
           </p>
           
           <button onclick="handleStart()" class="w-full bg-slate-800 border-2 border-slate-500 text-slate-200 font-bold py-4 hover:bg-slate-700 hover:border-amber-500 hover:text-amber-400 transition-all active:scale-95 flex items-center justify-center gap-2 tracking-widest">
@@ -200,7 +314,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
         </div>
-        <div class="absolute bottom-6 text-xs text-slate-600 tracking-widest">
+        <div class="absolute bottom-6 text-xs text-slate-600 tracking-widest z-10">
           © 2026 IMPACT STAR 
         </div>
       </div>
@@ -224,7 +338,7 @@
     });
 
     app.innerHTML = `
-      <div class="flex flex-col min-h-screen p-6 fade-in max-w-lg mx-auto">
+      <div class="flex flex-col min-h-screen p-6 fade-in max-w-lg mx-auto relative z-10">
         <div class="flex justify-between items-center mb-6 pt-4 border-b border-slate-800 pb-4">
           <span class="text-sm font-bold text-amber-500 tracking-widest">STAGE ${step} / ${questions.length}</span>
           <div class="flex gap-1">
@@ -233,7 +347,7 @@
         </div>
         
         <div class="flex-1 flex flex-col justify-center">
-          <div class="pixel-border p-6 mb-8 relative">
+          <div class="pixel-border p-6 mb-8 relative bg-slate-900/90 backdrop-blur-sm">
             <div class="absolute -top-3 -left-3 w-6 h-6 border-t-2 border-l-2 border-amber-500"></div>
             <div class="absolute -bottom-3 -right-3 w-6 h-6 border-b-2 border-r-2 border-amber-500"></div>
             <h2 class="text-xl font-bold text-slate-100 leading-relaxed">${q.title}</h2>
@@ -249,7 +363,7 @@
   function renderCalculating() {
     const app = document.getElementById('app');
     app.innerHTML = `
-      <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center fade-in">
+      <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center fade-in relative z-10">
         <div class="w-16 h-16 border-4 border-slate-700 border-t-amber-500 rounded-full animate-spin mb-8"></div>
         <h2 class="text-xl font-bold tracking-widest text-slate-200 mb-2">正在分析靈魂屬性...</h2>
         <p class="text-slate-500 text-sm">與三峽老街的職人頻率進行同步</p>
@@ -259,54 +373,96 @@
 
   function renderResult() {
     const res = results[finalResult];
+    const partnerRes = results[res.partner];
     const app = document.getElementById('app');
     
-    const statBar = (label, val) => `
+    const statBar = (label, val, colorClass) => `
       <div class="flex items-center gap-3 text-xs mb-1.5">
-        <span class="text-slate-400 w-12 text-right">${label}</span>
-        <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-          <div class="h-full bg-current opacity-80" style="width: ${val}%"></div>
+        <span class="text-slate-400 w-16 text-right">${label}</span>
+        <div class="flex-1 h-1.5 bg-slate-800 rounded-full relative">
+          <div class="absolute top-0 left-0 h-full ${colorClass}" style="width: ${val}%"></div>
         </div>
         <span class="text-slate-300 w-6">${val}</span>
       </div>
     `;
 
     app.innerHTML = `
-      <div class="min-h-screen py-10 px-4 fade-in flex flex-col items-center">
-        <p class="text-slate-400 text-xs tracking-[0.3em] mb-4">CHARACTER UNLOCKED</p>
+      <div class="min-h-screen py-10 px-4 fade-in flex flex-col items-center relative z-10">
+        <p class="text-slate-400 text-xs tracking-widest mb-4">CHARACTER UNLOCKED</p>
         
-        <div class="w-full max-w-sm ${res.style} bg-slate-900 border-2 rounded-lg p-1 relative overflow-hidden mb-8">
+        <div id="character-card-export" class="w-full max-w-sm ${res.style} bg-slate-900 border-2 rounded-lg p-1 relative mb-8">
+          
           <div class="w-full h-48 bg-slate-800 relative flex items-center justify-center border border-slate-700/50 mb-4 overflow-hidden">
-             <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent z-10"></div>
-             <span class="text-slate-600 tracking-widest text-sm z-0">[${res.imgPlaceholder}]</span>
+             <img src="${res.imgUrl}" alt="${res.class}" class="absolute inset-0 w-full h-full object-cover scale-[1.08] origin-center z-0" crossorigin="anonymous" />
+             <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-10"></div>
           </div>
           
           <div class="px-5 pb-5 relative z-20">
-            <span class="inline-block px-2 py-0.5 border border-current rounded text-[10px] tracking-widest mb-3 opacity-80">${res.attr}</span>
+            <div class="inline-block px-2 py-0.5 border border-slate-500 rounded text-[10px] tracking-widest mb-3 text-slate-300">${res.attr}</div>
             <h1 class="text-2xl font-black text-slate-100 mb-4">${res.title}</h1>
             
-            <div class="bg-slate-950/50 p-3 rounded border border-slate-800 mb-4 ${res.style}">
-               ${statBar('力量 STR', res.stats.str)}
-               ${statBar('敏捷 AGI', res.stats.agi)}
-               ${statBar('智力 INT', res.stats.int)}
-               ${statBar('專注 FOC', res.stats.focus)}
+            <div class="bg-slate-950/80 p-3 rounded border border-slate-800 mb-4">
+               ${statBar('力量 STR', res.stats.str, res.barColor)}
+               ${statBar('敏捷 AGI', res.stats.agi, res.barColor)}
+               ${statBar('智力 INT', res.stats.int, res.barColor)}
+               ${statBar('專注 FOC', res.stats.focus, res.barColor)}
             </div>
 
-            <p class="text-slate-400 text-sm leading-relaxed mb-2">
+            <p class="text-slate-300 text-sm leading-relaxed mb-2">
               ${res.description}
             </p>
           </div>
         </div>
 
         <div class="w-full max-w-sm">
+          <div class="bg-slate-800 border border-slate-600 rounded-lg p-5 shadow-lg relative overflow-hidden mb-6">
+             <h3 class="font-bold text-amber-400 mb-2 flex items-center gap-2 text-sm tracking-wider">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+               尋找命定隊友
+             </h3>
+             <p class="text-slate-300 text-sm leading-relaxed mb-4">
+               你的靈魂最需要 <span class="${partnerRes.style} font-bold px-1">${partnerRes.class}</span> 的輔助來平衡力量。
+             </p>
+             <button id="share-btn" onclick="generateShareLink()" class="w-full bg-slate-700 hover:bg-slate-600 border border-slate-500 text-slate-200 font-bold py-2 transition-all flex items-center justify-center gap-2 tracking-widest text-sm rounded">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+               複製招募連結
+             </button>
+          </div>
+
           <div class="bg-slate-800 border border-slate-600 rounded-lg p-5 shadow-lg relative overflow-hidden">
             <div class="absolute top-0 left-0 w-1 h-full ${res.btn}"></div>
-            <h3 class="font-bold text-slate-200 mb-3 flex items-center gap-2 text-sm tracking-wider">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${res.style}"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              專屬任務憑證
-            </h3>
-            <div class="bg-slate-900 p-3 border border-slate-700 text-slate-300 text-sm font-medium mb-4 text-center">
-              ${res.action}
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-slate-200 flex items-center gap-2 text-sm tracking-wider">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${res.style}"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                專屬任務憑證
+              </h3>
+            </div>
+            
+            <p class="text-xs text-amber-400 mb-3 tracking-wide">
+              ✨ 抵達三峽後，向店家出示此畫面即可解鎖
+            </p>
+
+            <!-- 票券視覺設計 -->
+            <div class="bg-slate-900 p-4 border-2 border-dashed border-slate-600 text-slate-200 text-sm font-bold mb-4 text-center relative overflow-hidden">
+              <!-- 左右打孔造型 -->
+              <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-800 rounded-full border-r-2 border-slate-600"></div>
+              <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-800 rounded-full border-l-2 border-slate-600"></div>
+              
+              <span class="relative z-10">${res.action}</span>
+              
+              <!-- 假條碼裝飾 -->
+              <div class="mt-3 opacity-30 flex justify-center">
+                <div class="w-full max-w-[150px] h-6 border-x-[3px] border-l-[6px] border-r-[2px] border-current border-solid flex justify-around gap-[2px]">
+                  <div class="w-[2px] bg-current h-full"></div>
+                  <div class="w-[4px] bg-current h-full"></div>
+                  <div class="w-[1px] bg-current h-full"></div>
+                  <div class="w-[3px] bg-current h-full"></div>
+                  <div class="w-[5px] bg-current h-full"></div>
+                  <div class="w-[2px] bg-current h-full"></div>
+                  <div class="w-[1px] bg-current h-full"></div>
+                  <div class="w-[4px] bg-current h-full"></div>
+                </div>
+              </div>
             </div>
             
             <button onclick="window.open('${res.mapUrl}', '_blank')" class="w-full ${res.btn} border border-transparent text-white font-bold py-3 transition-all flex items-center justify-center gap-2 tracking-widest text-sm mb-3">
@@ -314,9 +470,9 @@
               開啟地圖導航
             </button>
             
-            <button class="w-full bg-transparent border border-slate-600 text-slate-400 font-bold py-3 hover:bg-slate-700 hover:text-slate-200 transition-all flex items-center justify-center gap-2 tracking-widest text-sm">
+            <button id="download-btn" onclick="downloadCard()" class="w-full bg-transparent border border-slate-600 text-slate-400 font-bold py-3 hover:bg-slate-700 hover:text-slate-200 transition-all flex items-center justify-center gap-2 tracking-widest text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-              下載角色卡 (分享至 IG)
+              下載角色卡
             </button>
           </div>
           
@@ -345,6 +501,16 @@
 </head>
 <body class="bg-slate-950 text-slate-200 antialiased font-sans selection:bg-amber-500/30 overflow-x-hidden min-h-screen">
   <div class="scanlines"></div>
+  
+  <!-- 音效控制按鈕 -->
+  <button id="mute-btn" onclick="toggleMute()" class="fixed top-4 right-4 z-[100] p-2.5 bg-slate-800/80 rounded-full border border-slate-600 text-slate-300 hover:text-amber-400 hover:border-amber-500 transition-all backdrop-blur-sm shadow-lg">
+    <svg id="mute-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      <path d="M19.07 4.93a10 10 10 0 0 1 0 14.14"></path>
+    </svg>
+  </button>
+
   <div id="app"></div>
 </body>
 </html>
