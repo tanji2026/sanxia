@@ -2,14 +2,19 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>三峽職人：手路尋蹤</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
   
-  body { font-family: 'Noto Serif TC', serif; }
+  body { 
+    font-family: 'Noto Serif TC', serif; 
+    min-height: 100vh;
+    min-height: 100dvh; /* 修正手機工具列高度 */
+  }
+
   .fade-in { animation: fadeIn 0.5s ease-out forwards; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
   
@@ -23,9 +28,6 @@
     position: relative;
     border: 2px solid #475569;
     background: #0f172a;
-  }
-  .pixel-border::before, .pixel-border::after {
-    content: ''; position: absolute; background: #0f172a;
   }
   
   .scanlines {
@@ -154,24 +156,34 @@
     tea: new Audio('assets/audio/tea.mp3')
   };
   
-  // 設定所有音效為自動循環播放
   Object.values(bgmAudios).forEach(audio => audio.loop = true);
 
   let step = 0;
   let scores = { wood: 0, metal: 0, ferm: 0, dye: 0, tea: 0 };
   let finalResult = null;
   let isMuted = false;
+  let audioUnlocked = false;
+
+  // 重要：修正手機音效解鎖邏輯
+  function unlockAudio() {
+    if (audioUnlocked) return;
+    Object.values(bgmAudios).forEach(audio => {
+      audio.play().then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+      }).catch(() => {});
+    });
+    audioUnlocked = true;
+  }
 
   function toggleMute() {
     isMuted = !isMuted;
     const btnIcon = document.getElementById('mute-icon');
     
     if (isMuted) {
-      // 靜音：暫停所有音樂
       Object.values(bgmAudios).forEach(audio => audio.pause());
       btnIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
     } else {
-      // 解除靜音：如果有結算結果，就繼續播放該音樂
       if (finalResult && step > questions.length && bgmAudios[finalResult]) {
         bgmAudios[finalResult].play().catch(() => {});
       }
@@ -180,31 +192,24 @@
   }
 
   function playSound(type) {
-    // 停止所有正在播放的音效並重置時間
     Object.values(bgmAudios).forEach(audio => {
       audio.pause();
       audio.currentTime = 0;
     });
-    // 如果沒有被靜音，才播放新的音效
     if (bgmAudios[type] && !isMuted) {
       bgmAudios[type].play().catch(() => {});
     }
   }
 
   function handleStart() {
+    unlockAudio(); // 在點擊 START 時解鎖瀏覽器音效權限
     step = 1;
     scores = { wood: 0, metal: 0, ferm: 0, dye: 0, tea: 0 };
-    Object.values(bgmAudios).forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
-    });
     render();
   }
 
   function handleAnswer(type) {
     scores[type]++;
-    // 移除這裡的 playSound(type); 讓答題過程保持純視覺或原有的環境安靜感
-
     if (step < questions.length) {
       step++;
       render();
@@ -228,7 +233,6 @@
     step = questions.length + 1;
     renderCalculating();
     
-    // 等待動畫結束後，顯示結果並播放對應音效
     setTimeout(() => {
       renderResult();
       playSound(finalResult);
@@ -258,27 +262,32 @@
     });
   }
 
-  function getUrlParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-  }
-
   function generateShareLink() {
     const baseUrl = window.location.href.split('?')[0];
     const needType = results[finalResult].partner;
     const shareUrl = `${baseUrl}?need=${needType}`;
     
-    navigator.clipboard.writeText(shareUrl).then(() => {
+    // 手機版優先使用內建分享，否則降級為複製連結
+    if (navigator.share) {
+      navigator.share({ title: '三峽職人手路尋蹤', url: shareUrl });
+    } else {
+      const el = document.createElement('textarea');
+      el.value = shareUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      
       const shareBtn = document.getElementById('share-btn');
       const originalText = shareBtn.innerHTML;
       shareBtn.innerHTML = `已複製招募連結！`;
       setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
-    });
+    }
   }
 
   function renderLanding() {
     const app = document.getElementById('app');
-    const needParam = getUrlParam('need');
+    const needParam = new URLSearchParams(window.location.search).get('need');
     let subtitleHtml = `
       來到三峽，不只走馬看花。<br/>
       憑直覺回答 5 個問題，<br/>
@@ -325,17 +334,14 @@
     const app = document.getElementById('app');
     const q = questions[step - 1];
     
-    let optionsHtml = '';
-    q.options.forEach(opt => {
-      optionsHtml += `
-        <button onclick="handleAnswer('${opt.type}')" class="text-left w-full p-4 bg-slate-800 border border-slate-700 hover:border-amber-500 hover:bg-slate-800/80 transition-all active:scale-[0.98] group relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <span class="text-slate-300 font-medium leading-relaxed group-hover:text-amber-400 relative z-10 block pr-6">
-            <span class="text-slate-600 mr-2 text-sm">▶</span>${opt.text}
-          </span>
-        </button>
-      `;
-    });
+    let optionsHtml = q.options.map(opt => `
+      <button onclick="handleAnswer('${opt.type}')" class="text-left w-full p-4 bg-slate-800 border border-slate-700 hover:border-amber-500 hover:bg-slate-800/80 transition-all active:scale-[0.98] group relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <span class="text-slate-300 font-medium leading-relaxed group-hover:text-amber-400 relative z-10 block pr-6">
+          <span class="text-slate-600 mr-2 text-sm">▶</span>${opt.text}
+        </span>
+      </button>
+    `).join('');
 
     app.innerHTML = `
       <div class="flex flex-col min-h-screen p-6 fade-in max-w-lg mx-auto relative z-10">
@@ -387,11 +393,10 @@
     `;
 
     app.innerHTML = `
-      <div class="min-h-screen py-10 px-4 fade-in flex flex-col items-center relative z-10">
+      <div class="min-h-screen py-10 px-4 fade-in flex flex-col items-center relative z-10 overflow-y-auto">
         <p class="text-slate-400 text-xs tracking-widest mb-4">CHARACTER UNLOCKED</p>
         
         <div id="character-card-export" class="w-full max-w-sm ${res.style} bg-slate-900 border-2 rounded-lg p-1 relative mb-8">
-          
           <div class="w-full h-48 bg-slate-800 relative flex items-center justify-center border border-slate-700/50 mb-4 overflow-hidden">
              <img src="${res.imgUrl}" alt="${res.class}" class="absolute inset-0 w-full h-full object-cover scale-[1.08] origin-center z-0" crossorigin="anonymous" />
              <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-10"></div>
@@ -442,15 +447,13 @@
               ✨ 抵達三峽後，向店家出示此畫面即可解鎖
             </p>
 
-            <!-- 票券視覺設計 -->
             <div class="bg-slate-900 p-4 border-2 border-dashed border-slate-600 text-slate-200 text-sm font-bold mb-4 text-center relative overflow-hidden">
-              <!-- 左右打孔造型 -->
               <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-800 rounded-full border-r-2 border-slate-600"></div>
               <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-800 rounded-full border-l-2 border-slate-600"></div>
               
               <span class="relative z-10">${res.action}</span>
               
-              <!-- 假條碼裝飾 -->
+              <!-- 條碼裝飾 -->
               <div class="mt-3 opacity-30 flex justify-center">
                 <div class="w-full max-w-[150px] h-6 border-x-[3px] border-l-[6px] border-r-[2px] border-current border-solid flex justify-around gap-[2px]">
                   <div class="w-[2px] bg-current h-full"></div>
@@ -494,15 +497,12 @@
     }
   }
 
-  window.onload = () => {
-    render();
-  };
+  window.onload = () => { render(); };
 </script>
 </head>
 <body class="bg-slate-950 text-slate-200 antialiased font-sans selection:bg-amber-500/30 overflow-x-hidden min-h-screen">
   <div class="scanlines"></div>
   
-  <!-- 音效控制按鈕 -->
   <button id="mute-btn" onclick="toggleMute()" class="fixed top-4 right-4 z-[100] p-2.5 bg-slate-800/80 rounded-full border border-slate-600 text-slate-300 hover:text-amber-400 hover:border-amber-500 transition-all backdrop-blur-sm shadow-lg">
     <svg id="mute-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
