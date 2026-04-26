@@ -28,8 +28,8 @@
     z-index: 10;
   }
 
-  .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   
   .card-glow-wood { box-shadow: 0 0 20px rgba(180, 83, 9, 0.4), inset 0 0 20px rgba(180, 83, 9, 0.2); border-color: #b45309; }
   .card-glow-metal { box-shadow: 0 0 20px rgba(148, 163, 184, 0.4), inset 0 0 20px rgba(148, 163, 184, 0.2); border-color: #94a3b8; }
@@ -236,6 +236,7 @@
   function handleStart() {
     unlockAudio();
     const app = document.getElementById('app');
+    window.scrollTo(0, 0);
     app.innerHTML = `
       <div class="flex-1 flex flex-col items-center justify-center p-6 text-center fade-in w-full max-w-md mx-auto">
         <div class="text-amber-500 mb-6 animate-pulse">
@@ -255,7 +256,6 @@
 
   function handleAnswer(type) {
     scores[type]++;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (step < questions.length) {
       step++;
       render();
@@ -311,7 +311,6 @@
           link.click();
           btn.innerHTML = originalText;
         }).catch(err => {
-          console.error("Canvas generation error: ", err);
           btn.innerHTML = originalText;
           showToast('下載失敗，請稍後再試。');
         });
@@ -325,7 +324,7 @@
     const shareUrl = `${baseUrl}?need=${needType}`;
     
     if (navigator.share) {
-      navigator.share({ title: '三峽職人手路尋蹤', url: shareUrl }).catch(console.error);
+      navigator.share({ title: '三峽職人手路尋蹤', url: shareUrl }).catch(() => {});
     } else {
       const el = document.createElement('textarea');
       el.value = shareUrl;
@@ -342,6 +341,7 @@
   }
 
   function renderLanding() {
+    window.scrollTo(0, 0);
     const app = document.getElementById('app');
     const needParam = new URLSearchParams(window.location.search).get('need');
     let subtitleHtml = `
@@ -387,6 +387,7 @@
   }
 
   function renderQuestion() {
+    window.scrollTo(0, 0);
     const app = document.getElementById('app');
     const q = questions[step - 1];
     
@@ -424,6 +425,7 @@
   }
 
   function renderCalculating() {
+    window.scrollTo(0, 0);
     const app = document.getElementById('app');
     const flavorTexts = ["讀取靈魂碎片...", "共鳴老街頻率...", "凝聚職人精神...", "鑄造專屬憑證..."];
     let textIdx = 0;
@@ -444,6 +446,7 @@
   }
 
   function renderResult() {
+    window.scrollTo(0, 0);
     const res = results[finalResult];
     const partnerRes = results[res.partner];
     const app = document.getElementById('app');
