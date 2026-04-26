@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
 <title>三峽職人：手路尋蹤</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -12,7 +13,7 @@
   body { 
     font-family: 'Noto Serif TC', serif; 
     min-height: 100vh;
-    min-height: 100dvh; /* 修正手機工具列高度 */
+    min-height: 100dvh;
   }
 
   .fade-in { animation: fadeIn 0.5s ease-out forwards; }
@@ -163,8 +164,23 @@
   let finalResult = null;
   let isMuted = false;
   let audioUnlocked = false;
+  let calcInterval = null;
 
-  // 重要：修正手機音效解鎖邏輯
+  function showToast(msg) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'bg-amber-500 text-slate-900 px-5 py-3 rounded shadow-xl font-bold text-sm tracking-widest fade-in border border-amber-300';
+    toast.innerHTML = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      toast.style.transition = 'all 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+
   function unlockAudio() {
     if (audioUnlocked) return;
     Object.values(bgmAudios).forEach(audio => {
@@ -202,10 +218,23 @@
   }
 
   function handleStart() {
-    unlockAudio(); // 在點擊 START 時解鎖瀏覽器音效權限
-    step = 1;
-    scores = { wood: 0, metal: 0, ferm: 0, dye: 0, tea: 0 };
-    render();
+    unlockAudio();
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center fade-in relative z-10">
+        <div class="text-amber-500 mb-6 animate-pulse">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m17 5-5-3-5 3v14l5 3 5-3z"/></svg>
+        </div>
+        <h2 class="text-xl font-bold tracking-widest text-slate-200 mb-2">踏入老街結界</h2>
+        <p class="text-slate-500 text-sm">正在同步時空軌跡...</p>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      step = 1;
+      scores = { wood: 0, metal: 0, ferm: 0, dye: 0, tea: 0 };
+      render();
+    }, 1500);
   }
 
   function handleAnswer(type) {
@@ -219,24 +248,27 @@
   }
 
   function calculateResult() {
-    let maxType = 'wood';
-    let maxScore = scores.wood;
+    let maxScore = -1;
+    let possibleTypes = [];
     
-    ['metal', 'ferm', 'dye', 'tea'].forEach(type => {
+    ['wood', 'metal', 'ferm', 'dye', 'tea'].forEach(type => {
       if (scores[type] > maxScore) {
-        maxType = type;
         maxScore = scores[type];
+        possibleTypes = [type];
+      } else if (scores[type] === maxScore) {
+        possibleTypes.push(type);
       }
     });
 
-    finalResult = maxType;
+    finalResult = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
     step = questions.length + 1;
     renderCalculating();
     
     setTimeout(() => {
+      if (calcInterval) clearInterval(calcInterval);
       renderResult();
       playSound(finalResult);
-    }, 2000);
+    }, 2500);
   }
 
   function downloadCard() {
@@ -267,7 +299,6 @@
     const needType = results[finalResult].partner;
     const shareUrl = `${baseUrl}?need=${needType}`;
     
-    // 手機版優先使用內建分享，否則降級為複製連結
     if (navigator.share) {
       navigator.share({ title: '三峽職人手路尋蹤', url: shareUrl });
     } else {
@@ -278,10 +309,7 @@
       document.execCommand('copy');
       document.body.removeChild(el);
       
-      const shareBtn = document.getElementById('share-btn');
-      const originalText = shareBtn.innerHTML;
-      shareBtn.innerHTML = `已複製招募連結！`;
-      setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+      showToast('✨ 已複製專屬招募連結！');
     }
   }
 
@@ -368,13 +396,22 @@
 
   function renderCalculating() {
     const app = document.getElementById('app');
+    const flavorTexts = ["讀取靈魂碎片...", "共鳴老街頻率...", "凝聚職人精神...", "鑄造專屬憑證..."];
+    let textIdx = 0;
+    
     app.innerHTML = `
       <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center fade-in relative z-10">
         <div class="w-16 h-16 border-4 border-slate-700 border-t-amber-500 rounded-full animate-spin mb-8"></div>
-        <h2 class="text-xl font-bold tracking-widest text-slate-200 mb-2">正在分析靈魂屬性...</h2>
-        <p class="text-slate-500 text-sm">與三峽老街的職人頻率進行同步</p>
+        <h2 class="text-xl font-bold tracking-widest text-slate-200 mb-3">正在分析靈魂屬性</h2>
+        <p id="calc-text" class="text-amber-500 text-sm tracking-widest font-bold">${flavorTexts[0]}</p>
       </div>
     `;
+
+    calcInterval = setInterval(() => {
+      textIdx = (textIdx + 1) % flavorTexts.length;
+      const el = document.getElementById('calc-text');
+      if(el) el.innerText = flavorTexts[textIdx];
+    }, 600);
   }
 
   function renderResult() {
@@ -398,7 +435,7 @@
         
         <div id="character-card-export" class="w-full max-w-sm ${res.style} bg-slate-900 border-2 rounded-lg p-1 relative mb-8">
           <div class="w-full h-48 bg-slate-800 relative flex items-center justify-center border border-slate-700/50 mb-4 overflow-hidden">
-             <img src="${res.imgUrl}" alt="${res.class}" class="absolute inset-0 w-full h-full object-cover scale-[1.08] origin-center z-0" crossorigin="anonymous" />
+             <img src="${res.imgUrl}" alt="${res.class}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxZTI5M2IiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzQ3NTU2OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7ogbfkurrlvbHlg488L3RleHQ+PC9zdmc+'" class="absolute inset-0 w-full h-full object-cover scale-[1.08] origin-center z-0" crossorigin="anonymous" />
              <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-10"></div>
           </div>
           
@@ -453,7 +490,6 @@
               
               <span class="relative z-10">${res.action}</span>
               
-              <!-- 條碼裝飾 -->
               <div class="mt-3 opacity-30 flex justify-center">
                 <div class="w-full max-w-[150px] h-6 border-x-[3px] border-l-[6px] border-r-[2px] border-current border-solid flex justify-around gap-[2px]">
                   <div class="w-[2px] bg-current h-full"></div>
@@ -510,6 +546,8 @@
       <path d="M19.07 4.93a10 10 10 0 0 1 0 14.14"></path>
     </svg>
   </button>
+
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-[150] flex flex-col gap-3 pointer-events-none items-center w-full max-w-sm px-4"></div>
 
   <div id="app"></div>
 </body>
